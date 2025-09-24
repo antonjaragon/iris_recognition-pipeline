@@ -1,0 +1,12 @@
+b/
+c/
+masks/
+segmented/
+
+Weights/
+
+__pycache__/
+
+.ipynb_checkpoints
+
+*.log
