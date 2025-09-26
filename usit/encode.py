@@ -56,6 +56,8 @@ def main():
         circle_dir = circles_base / relative_path.parent
         input_tiff = input_base / relative_path.with_suffix('.tiff')
         input_tif = input_base / relative_path.with_suffix('.tif')
+        input_png = input_base / relative_path.with_suffix('.png')
+
         inner_txt = circle_dir / f'{stem}.inner.txt'
         outer_txt = circle_dir / f'{stem}.outer.txt'
         output_texture = textures_base / relative_path.with_name(f"{stem}.bmp")
@@ -81,10 +83,16 @@ def main():
             continue
 
         # Pick input image
-        input_image = input_tiff if input_tiff.exists() else input_tif
-        if not input_image.exists():
+        if input_tiff.exists():
+            input_image = input_tiff
+        elif input_tif.exists():
+            input_image = input_tif
+        elif input_png.exists():
+            input_image = input_png
+        else:
             logging.error(f"No input image found for {mask_file}")
             continue
+        
 
         # Run manuseg for textures
         cmd2 = [

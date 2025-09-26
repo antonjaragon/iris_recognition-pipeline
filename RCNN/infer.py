@@ -119,19 +119,19 @@ def get_ax(rows=1, cols=1, size=8):
     _, ax = plt.subplots(rows, cols, figsize=(size*cols, size*rows))
     return ax
 
-def find_tiff_files(directory):
-    tiff_files = []
+def find_images(directory):
+    image_files = []
     
     # Walk through all the subdirectories and files
     for root, dirs, files in os.walk(directory):
         for file in files:
-            if file.lower().endswith('.tiff') or file.lower().endswith('tif'):
+            if file.lower().endswith('.tiff') or file.lower().endswith('tif') or file.lower().endswith('png'):
 #                 path = os.path.relpath(os.path.join(root, file), start=directory)
                 path = os.path.join(root, file)
                 
-                tiff_files.append(path)
+                image_files.append(path)
     
-    return tiff_files
+    return image_files
 
 
 #Inference one at a time, change to batch (Memory per image calculate)
@@ -184,12 +184,18 @@ def runonFolder(imList,segmFolder,maskFolder,centered):
             mask = r['masks'][:, :, 0]
 
 
-            saveSubPath = os.path.join(*imList[i].split("/")[3:-1])
+            # if len(imList[i].split("/")) < 2:
+                
+            # print(len(imList[i].split("/")))
+
+
+            saveSubPath = os.path.join(*imList[i].split("/")[3:-1]) if len(imList[i].split("/")) > 4 else ""
             saveName = imList[i].split("/")[-1]
 
             saveName = re.sub('[.].*','.tiff',saveName)
 
             print(saveName)
+            # print(saveSubPath)
 
             mask = r['masks'][:, :, 0]
             bbox = r['rois'][0]
@@ -260,7 +266,7 @@ def runonFolder(imList,segmFolder,maskFolder,centered):
 folderPath = ROOT_DIR+"/b"
 
 
-imList = find_tiff_files(folderPath)
+imList = find_images(folderPath)
 
 #Segmented masks stored in /segmented
 runonFolder(imList,ROOT_DIR+"/segmented",ROOT_DIR+"/masks",centered = 0)
