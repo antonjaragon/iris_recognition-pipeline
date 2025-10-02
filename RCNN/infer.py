@@ -125,7 +125,7 @@ def find_images(directory):
     # Walk through all the subdirectories and files
     for root, dirs, files in os.walk(directory):
         for file in files:
-            if file.lower().endswith('.tiff') or file.lower().endswith('tif') or file.lower().endswith('png'):
+            if file.lower().endswith('.tiff') or file.lower().endswith('tif') or file.lower().endswith('png') or file.lower().endswith('jpg'):
 #                 path = os.path.relpath(os.path.join(root, file), start=directory)
                 path = os.path.join(root, file)
                 
@@ -263,7 +263,7 @@ def runonFolder(imList,segmFolder,maskFolder,centered):
     print("Average time per image: " + str((end-start)/ len(imList)))
 
 #Folder containing iris images
-folderPath = ROOT_DIR+"/b"
+folderPath = ROOT_DIR+"/input_images"
 
 
 imList = find_images(folderPath)
