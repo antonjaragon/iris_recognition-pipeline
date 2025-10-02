@@ -26,7 +26,7 @@ MATCHER_COMMAND = os.getenv("MATCHER_COMMAND")                    # encode+match
 
 # --- Paths (host side) ---
 BASE_DIR = os.getcwd()
-INPUT_IMAGES_DIR = os.path.join(BASE_DIR, "input_images")   # your source images
+INPUT_IMAGES_DIR = os.path.join(BASE_DIR, "DB_SYNTIRIS_vero_0_5_selectedframes")   # your source images
 LOCAL_MASKS_DIR = os.path.join(BASE_DIR, "masks")           # masks produced by segmenter
 LOCAL_DISTANCES_DIR = os.path.join(BASE_DIR, "distances")   # matcher results
 
