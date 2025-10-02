@@ -57,6 +57,7 @@ def main():
         input_tiff = input_base / relative_path.with_suffix('.tiff')
         input_tif = input_base / relative_path.with_suffix('.tif')
         input_png = input_base / relative_path.with_suffix('.png')
+        input_jpg = input_base / relative_path.with_suffix('.jpg')
 
         inner_txt = circle_dir / f'{stem}.inner.txt'
         outer_txt = circle_dir / f'{stem}.outer.txt'
@@ -70,6 +71,8 @@ def main():
 
         # Ensure dirs exist
         circle_dir.mkdir(parents=True, exist_ok=True)
+        iris_code_base.mkdir(parents=True, exist_ok=True)
+        iris_code_mask_base.mkdir(parents=True, exist_ok=True)
         output_texture.parent.mkdir(parents=True, exist_ok=True)
         output_texture_masks.parent.mkdir(parents=True, exist_ok=True)
         output_code.parent.mkdir(parents=True, exist_ok=True)
@@ -89,6 +92,8 @@ def main():
             input_image = input_tif
         elif input_png.exists():
             input_image = input_png
+        elif input_jpg.exists():
+            input_image = input_jpg
         else:
             logging.error(f"No input image found for {mask_file}")
             continue
