@@ -1,12 +1,21 @@
+import sys
 import pandas as pd
 import numpy as np
 import matplotlib.pyplot as plt
 from sklearn.metrics import roc_curve, roc_auc_score
 
+# === 0) Command-line argument ===
+if len(sys.argv) < 2:
+    print("Usage: python script.py <path_to_csv>")
+    sys.exit(1)
+
+csv_path = sys.argv[1]
+print(f"Loading data from: {csv_path}")
+
 # === 1) Load file robustly ===
 df = pd.read_csv(
-    "distances/hamming_distance.txt",
-    sep=r"\s+",
+    csv_path,
+    sep=r"[\s,]+",              # Match one or more spaces, tabs, or commas
     engine="python",
     header=None,
     names=["img1", "img2", "score"],

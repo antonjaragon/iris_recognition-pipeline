@@ -1,10 +1,27 @@
 import os
+import sys
 import shutil
 import subprocess
 from pathlib import Path
 from dotenv import load_dotenv
 
-# Load variables from .env file
+# ================================================================
+# 0) Command-line argument
+# ================================================================
+if len(sys.argv) < 2:
+    print("Usage: python pipeline.py <input_images_dir>")
+    sys.exit(1)
+
+INPUT_IMAGES_DIR = os.path.abspath(sys.argv[1])
+if not os.path.isdir(INPUT_IMAGES_DIR):
+    print(f"[ERROR] Input directory not found: {INPUT_IMAGES_DIR}")
+    sys.exit(1)
+
+print(f"[INFO] Using input images from: {INPUT_IMAGES_DIR}")
+
+# ================================================================
+# 1) Load variables from .env file
+# ================================================================
 load_dotenv(".env")
 
 # --- Configuration (SEGMENTER) ---
@@ -16,27 +33,27 @@ SEGMENTER_OUTPUT_FOLDER = os.getenv("SEGMENTER_OUTPUT_FOLDER")
 SEGMENTER_COMMAND = os.getenv("SEGMENTER_COMMAND")
 
 # --- Configuration (MATCHER: includes encoding + matching + stats) ---
-MATCHER_CONTAINER_NAME = os.getenv("MATCHER_CONTAINER_NAME")      # 'iris_matcher'
-MATCHER_IMAGE = os.getenv("MATCHER_IMAGE")                        # 'antoniounimi/usit'
-MATCHER_FOLDER = os.getenv("MATCHER_FOLDER")                      # 'usit'
-MATCHER_INPUT_IMAGES = os.getenv("MATCHER_INPUT_IMAGES")          # 'data/input_images'
-MATCHER_INPUT_MASKS = os.getenv("MATCHER_INPUT_MASKS")            # 'data/masks'
-MATCHER_OUTPUT_FOLDER = os.getenv("MATCHER_OUTPUT_FOLDER")        # 'data/distances'
-MATCHER_COMMAND = os.getenv("MATCHER_COMMAND")                    # encode+match+stats (chained)
+MATCHER_CONTAINER_NAME = os.getenv("MATCHER_CONTAINER_NAME")
+MATCHER_IMAGE = os.getenv("MATCHER_IMAGE")
+MATCHER_FOLDER = os.getenv("MATCHER_FOLDER")
+MATCHER_INPUT_IMAGES = os.getenv("MATCHER_INPUT_IMAGES")
+MATCHER_INPUT_MASKS = os.getenv("MATCHER_INPUT_MASKS")
+MATCHER_OUTPUT_FOLDER = os.getenv("MATCHER_OUTPUT_FOLDER")
+MATCHER_COMMAND = os.getenv("MATCHER_COMMAND")
 
-# --- Paths (host side) ---
+# ================================================================
+# 2) Paths (host side)
+# ================================================================
 BASE_DIR = os.getcwd()
-INPUT_IMAGES_DIR = os.path.join(BASE_DIR, "DB_SYNTIRIS_vero_0_5_selectedframes")   # your source images
 LOCAL_MASKS_DIR = os.path.join(BASE_DIR, "masks")           # masks produced by segmenter
 LOCAL_DISTANCES_DIR = os.path.join(BASE_DIR, "distances")   # matcher results
 
-# Segmenter mount root (host path)
 SEGMENTER_PATH = os.path.join(BASE_DIR, SEGMENTER_FOLDER)
-
-# Matcher mount root (host path)
 MATCHER_PATH = os.path.join(BASE_DIR, MATCHER_FOLDER)
 
-# --- Helpers ---
+# ================================================================
+# 3) Helpers
+# ================================================================
 def ensure_dir(path: str):
     Path(path).mkdir(parents=True, exist_ok=True)
 
@@ -63,7 +80,9 @@ def run_docker_once(name: str, image: str, host_mount: str, workdir_in_container
     print(f"\n[DOCKER] Running: {' '.join(docker_cmd)}\n")
     subprocess.run(docker_cmd, check=True)
 
-# --- Sanity checks ---
+# ================================================================
+# 4) Sanity checks
+# ================================================================
 required_env = {
     "SEGMENTER_CONTAINER_NAME": SEGMENTER_CONTAINER_NAME,
     "SEGMENTER_IMAGE": SEGMENTER_IMAGE,
@@ -83,7 +102,9 @@ missing = [k for k, v in required_env.items() if not v]
 if missing:
     raise RuntimeError(f"Missing required .env variables: {', '.join(missing)}")
 
-# --- Ensure local folders exist ---
+# ================================================================
+# 5) Ensure local folders exist
+# ================================================================
 ensure_dir(SEGMENTER_PATH)
 ensure_dir(os.path.join(SEGMENTER_PATH, SEGMENTER_INPUT_FOLDER))
 ensure_dir(LOCAL_MASKS_DIR)
@@ -94,9 +115,9 @@ ensure_dir(os.path.join(MATCHER_PATH, MATCHER_INPUT_MASKS))
 ensure_dir(os.path.join(MATCHER_PATH, MATCHER_OUTPUT_FOLDER))
 ensure_dir(LOCAL_DISTANCES_DIR)
 
-# =========================
+# ================================================================
 # STEP 1: SEGMENTER
-# =========================
+# ================================================================
 print("[STEP 1] Preparing inputs for segmenter...")
 copy_all_files(INPUT_IMAGES_DIR, os.path.join(SEGMENTER_PATH, SEGMENTER_INPUT_FOLDER))
 print(f"  → Copied input images to {SEGMENTER_FOLDER}/{SEGMENTER_INPUT_FOLDER}/")
@@ -116,21 +137,20 @@ container_output_path = os.path.join(SEGMENTER_PATH, SEGMENTER_OUTPUT_FOLDER)
 copy_all_files(container_output_path, LOCAL_MASKS_DIR)
 print(f"  → Results copied to {LOCAL_MASKS_DIR}/")
 
-# =========================
-# STEP 2: MATCHER (encode + match + stats)
-# =========================
+# ================================================================
+# STEP 2: MATCHER (encode + match)
+# ================================================================
 print("\n[STEP 2] Preparing inputs for matcher...")
 
 matcher_images_mount = os.path.join(MATCHER_PATH, MATCHER_INPUT_IMAGES)
 matcher_masks_mount = os.path.join(MATCHER_PATH, MATCHER_INPUT_MASKS)
 
-# Copy original images and freshly produced masks
 copy_all_files(INPUT_IMAGES_DIR, matcher_images_mount)
 copy_all_files(LOCAL_MASKS_DIR, matcher_masks_mount)
 print(f"  → Copied images to {MATCHER_FOLDER}/{MATCHER_INPUT_IMAGES}/")
 print(f"  → Copied masks to  {MATCHER_FOLDER}/{MATCHER_INPUT_MASKS}/")
 
-print("[STEP 2] Running matcher container (encode + match + stats)...")
+print("[STEP 2] Running matcher container (encode + match)...")
 run_docker_once(
     name=MATCHER_CONTAINER_NAME,
     image=MATCHER_IMAGE,
@@ -146,4 +166,3 @@ copy_all_files(matcher_output_path, LOCAL_DISTANCES_DIR)
 print(f"  → distances/results saved to {LOCAL_DISTANCES_DIR}/")
 
 print("\n✅ Pipeline complete (2 steps: Segmenter, Matcher).")
-
